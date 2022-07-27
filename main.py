@@ -74,7 +74,7 @@ def get_russian_translations(word, max_offset, query_offset):
     GROUP BY aw.id, vocabulary, word
     ORDER BY sml DESC, id LIMIT %s OFFSET %s
     ''', (word, word, max_offset, query_offset))
-    return [Translation(**entity) for entity in cur.fetchall()]
+    return [Translation(**row) for row in cur.fetchall()]
 
 
 def get_kalmyk_translations(word, max_offset, query_offset):
@@ -94,7 +94,7 @@ def get_kalmyk_translations(word, max_offset, query_offset):
     GROUP BY aw.id, vocabulary, word, alias
     ORDER BY sml DESC, id LIMIT %s OFFSET %s
     ''', (word, word, word, word, max_offset, query_offset))
-    return [Translation(**entity) for entity in cur.fetchall()]
+    return [Translation(**row) for row in cur.fetchall()]
 
 
 def get_translations(word, max_offset, query_offset) -> [Translation]:
@@ -113,7 +113,7 @@ def get_translations(word, max_offset, query_offset) -> [Translation]:
     GROUP BY aw.id, vocabulary, word, alias
     ORDER BY sml DESC, vocabulary, id LIMIT %s OFFSET %s
     ''', (word, word, word, word, max_offset, query_offset))
-    return [Translation(**entity) for entity in cur.fetchall()]
+    return [Translation(**row) for row in cur.fetchall()]
 
 
 def get_by_id(_id):
@@ -131,7 +131,7 @@ def get_by_id(_id):
         ''',
         (_id,)
     )
-    return [Translation(**entity) for entity in cur.fetchall()]
+    return [Translation(**row) for row in cur.fetchall()]
 
 
 def render_results(translations: list[Translation]):
@@ -141,6 +141,7 @@ def render_results(translations: list[Translation]):
             translation.word,
             types.InputTextMessageContent(
                 f'<b>{translation.word}</b>\n{translation.translation}',
+                'HTML',
             ),
             description=re.sub(r'<.+?>', '', translation.translation)
         ) for translation in translations
@@ -221,7 +222,7 @@ def inline_handler(inline_query: types.InlineQuery):
                 types.InlineQueryResultArticle(
                     0, 'Превышен лимит строки',
                     types.InputTextMessageContent(
-                        '<b>Ошибка</b>/nПревышен лимит строки',
+                        '<b>Ошибка</b>\nПревышен лимит строки',
                         'HTML'
                     ),
                     description=''
@@ -244,6 +245,7 @@ def inline_handler(inline_query: types.InlineQuery):
                 0, 'Начните вводить',
                 types.InputTextMessageContent(
                     'В боте используется <a href="https://core.telegram.org/bots/inline">inline mode</a>. Для того, чтобы перевести слово, в текстовом поле введите ник бота: <code>@kelmrch_bot </code>, затем начните вводить слово.',
+                    'HTML'
                 ),
                 description=''
             )
