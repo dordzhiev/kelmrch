@@ -61,85 +61,93 @@ def translations_markup(translations: list[Translation]):
 
 
 def get_russian_translations(word, max_offset, query_offset):
-    with pool.getconn() as con:
-        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute('''
-            SELECT 
-                aw.id,
-                vocabulary,
-                word,
-                STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation,
-                strict_word_similarity (word, %s) as sml
-            FROM all_words aw INNER JOIN all_translations at2
-            ON aw.id = aw_id
-            WHERE vocabulary = 'r' AND word %% %s
-            GROUP BY aw.id, vocabulary, word
-            ORDER BY sml DESC, id LIMIT %s OFFSET %s
-            ''', (word, word, max_offset, query_offset))
-            return [Translation(**row) for row in cur.fetchall()]
+    con = pool.getconn()
+    with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute('''
+        SELECT 
+            aw.id,
+            vocabulary,
+            word,
+            STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation,
+            strict_word_similarity (word, %s) as sml
+        FROM all_words aw INNER JOIN all_translations at2
+        ON aw.id = aw_id
+        WHERE vocabulary = 'r' AND word %% %s
+        GROUP BY aw.id, vocabulary, word
+        ORDER BY sml DESC, id LIMIT %s OFFSET %s
+        ''', (word, word, max_offset, query_offset))
+        r = [Translation(**row) for row in cur.fetchall()]
+    pool.putconn(con)
+    return r
 
 
 def get_kalmyk_translations(word, max_offset, query_offset):
-    with pool.getconn() as con:
-        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute('''
-            SELECT
-                aw.id,
-                vocabulary,
-                word,
-                STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation,
-                GREATEST ( strict_word_similarity (word, %s), strict_word_similarity (alias, %s) ) as sml
-            FROM all_words aw
-            INNER JOIN all_translations at2
-            ON aw.id = aw_id
-            LEFT JOIN cyrillic_aliases ca
-            ON aw.id = ca.id
-            WHERE vocabulary = 'k' AND (word %% %s OR alias %% %s)
-            GROUP BY aw.id, vocabulary, word, alias
-            ORDER BY sml DESC, id LIMIT %s OFFSET %s
-            ''', (word, word, word, word, max_offset, query_offset))
-            return [Translation(**row) for row in cur.fetchall()]
+    con = pool.getconn()
+    with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute('''
+        SELECT
+            aw.id,
+            vocabulary,
+            word,
+            STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation,
+            GREATEST ( strict_word_similarity (word, %s), strict_word_similarity (alias, %s) ) as sml
+        FROM all_words aw
+        INNER JOIN all_translations at2
+        ON aw.id = aw_id
+        LEFT JOIN cyrillic_aliases ca
+        ON aw.id = ca.id
+        WHERE vocabulary = 'k' AND (word %% %s OR alias %% %s)
+        GROUP BY aw.id, vocabulary, word, alias
+        ORDER BY sml DESC, id LIMIT %s OFFSET %s
+        ''', (word, word, word, word, max_offset, query_offset))
+        r = [Translation(**row) for row in cur.fetchall()]
+    pool.putconn(con)
+    return r
 
 
 def get_translations(word, max_offset, query_offset) -> [Translation]:
-    with pool.getconn() as con:
-        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute('''
+    con = pool.getconn()
+    with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute('''
+        SELECT
+            aw.id,
+            vocabulary,
+            word,
+            STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation,
+            GREATEST ( strict_word_similarity (word, %s), strict_word_similarity (alias, %s) ) as sml
+        FROM all_words aw INNER JOIN all_translations at2
+        ON aw.id = aw_id
+        LEFT JOIN cyrillic_aliases ca
+        ON aw.id = ca.id
+        WHERE word %% %s or alias %% %s
+        GROUP BY aw.id, vocabulary, word, alias
+        ORDER BY sml DESC, vocabulary, id LIMIT %s OFFSET %s
+        ''', (word, word, word, word, max_offset, query_offset))
+        r = [Translation(**row) for row in cur.fetchall()]
+    pool.putconn(con)
+    return r
+
+
+def get_by_id(_id):
+    con = pool.getconn()
+    with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            '''
             SELECT
                 aw.id,
                 vocabulary,
                 word,
-                STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation,
-                GREATEST ( strict_word_similarity (word, %s), strict_word_similarity (alias, %s) ) as sml
+                STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation
             FROM all_words aw INNER JOIN all_translations at2
             ON aw.id = aw_id
-            LEFT JOIN cyrillic_aliases ca
-            ON aw.id = ca.id
-            WHERE word %% %s or alias %% %s
-            GROUP BY aw.id, vocabulary, word, alias
-            ORDER BY sml DESC, vocabulary, id LIMIT %s OFFSET %s
-            ''', (word, word, word, word, max_offset, query_offset))
-            return [Translation(**row) for row in cur.fetchall()]
-
-
-def get_by_id(_id):
-    with pool.getconn() as con:
-        with con.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(
-                '''
-                SELECT
-                    aw.id,
-                    vocabulary,
-                    word,
-                    STRING_AGG ( translation, '\n' ORDER BY at2.id ) as translation
-                FROM all_words aw INNER JOIN all_translations at2
-                ON aw.id = aw_id
-                WHERE aw.id = %s
-                GROUP BY aw.id, vocabulary, word
-                ''',
-                (_id,)
-            )
-            return [Translation(**row) for row in cur.fetchall()]
+            WHERE aw.id = %s
+            GROUP BY aw.id, vocabulary, word
+            ''',
+            (_id,)
+        )
+        r = [Translation(**row) for row in cur.fetchall()]
+    pool.putconn(con)
+    return r
 
 
 def render_results(translations: list[Translation]):
