@@ -264,7 +264,3 @@ def inline_handler(inline_query: types.InlineQuery):
         else:
             new_offset = query_offset + len(translations)
     bot.answer_inline_query(str(inline_query.id), r, 0, False, new_offset)
-
-
-if __name__ == '__main__':
-    bot.infinity_polling(skip_pending=True)
