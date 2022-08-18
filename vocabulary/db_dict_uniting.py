@@ -24,8 +24,13 @@ def recreate_tables(cur):
         id serial primary key references all_words,
         alias text
     );''')
-    cur.execute('''CREATE INDEX all_words_idx ON all_words USING GIST (word gist_trgm_ops);''')
-    cur.execute('''CREATE INDEX cyrillic_aliases_idx ON cyrillic_aliases USING GIST (alias gist_trgm_ops);''')
+    try:
+        cur.execute('CREATE INDEX all_words_idx ON all_words USING GIST (word gist_trgm_ops);')
+        cur.execute('CREATE INDEX cyrillic_aliases_idx ON cyrillic_aliases USING GIST (alias gist_trgm_ops);')
+    except:
+        cur.connection.rollback()
+        cur.execute('CREATE EXTENSION pg_trgm;')
+        recreate_tables(cur)
 
 
 def unite_vocabularies(cur):
