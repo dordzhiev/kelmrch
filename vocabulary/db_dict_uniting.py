@@ -26,6 +26,7 @@ def recreate_tables(cur):
     );''')
     try:
         cur.execute('CREATE INDEX all_words_idx ON all_words USING GIST (word gist_trgm_ops);')
+        cur.execute('CREATE INDEX all_translations_idx ON all_translations USING GIST (translation gist_trgm_ops);')
         cur.execute('CREATE INDEX cyrillic_aliases_idx ON cyrillic_aliases USING GIST (alias gist_trgm_ops);')
     except:
         cur.connection.rollback()
