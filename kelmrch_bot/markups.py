@@ -1,7 +1,7 @@
 from telebot import types
 
 from kelmrch_bot.dto import Translation
-from kelmrch_bot.filters import similar_word_factory
+from kelmrch_bot.filters import similar_word_factory, reversed_translation_factory
 
 
 def translate_markup():
@@ -23,11 +23,11 @@ def translate_markup():
     )
 
 
-def translations_markup(translations: list[Translation]):
+def translations_markup(translations: list[Translation], word):
     return types.InlineKeyboardMarkup(None, 2).add(
         *(
             types.InlineKeyboardButton(translation.word, callback_data=similar_word_factory.new(translation.id))
             for translation in translations
         ),
-        types.InlineKeyboardButton('Использовать обратный поиск', callback_data='use')
+        types.InlineKeyboardButton('Использовать обратный поиск', callback_data=reversed_translation_factory.new(word))
     )

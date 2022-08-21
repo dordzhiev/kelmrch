@@ -47,7 +47,7 @@ def translate_handler(message: types.Message, bot: TeleBot):
             bot.send_message(
                 message.chat.id,
                 text,
-                reply_markup=translations_markup(similar_results)
+                reply_markup=translations_markup(similar_results, message.text)
             )
     else:
         bot.send_message(message.chat.id, text)
@@ -56,14 +56,9 @@ def translate_handler(message: types.Message, bot: TeleBot):
 def similar_word_handler(callback: types.CallbackQuery, bot: TeleBot):
     data = similar_word_factory.parse(callback.data)
     word_id = int(data['word_id'])
-    translations = repository.get_by_id(word_id)
-    if translations:
-        translation = translations[0]
-        bot.edit_message_text(
-            f'<b>{translation.word}</b>\n{translation.translation}',
-            callback.message.chat.id,
-            callback.message.id,
-        )
+    translation = repository.get_by_id(word_id)
+    if translation:
+        bot.send_message(callback.message.chat.id, f'<b>{translation.word}</b>\n{translation.translation}')
     else:
         bot.answer_callback_query(callback.id, 'Ошибка!')
 

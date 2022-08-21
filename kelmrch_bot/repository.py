@@ -102,7 +102,7 @@ class Repository:
             GROUP BY aw.id, vocabulary, word
             '''
         )
-        return [Translation(**row) for row in cur.fetchall()]
+        return Translation(**cur.fetchone())
 
     @get_and_put_conn
     def get_reversed_translations(self, word, cur):
