@@ -106,16 +106,17 @@ class Repository:
 
     @get_and_put_conn
     def get_reversed_translations(self, word, limit, offset, cur):
+        pattern = rf'(?<![а-яёөүәҗһң])(?<![а-яёөүәҗһң]\s)(?:{word})(?!\s[а-яёөүәҗһң])(?![а-яёөүәҗһң])'
         cur.execute(
-            f'''
+            rf'''
             select aw.id, vocabulary, word, "translation", word_similarity(%s, "translation") as sml
             from all_words aw inner join all_translations at2
             on aw.id = at2.aw_id
             where %s <%% "translation"
-            and "translation" ~* '(?<![а-яёөүәҗһң]\s)(?:{word})(?!\s[а-яёөүәҗһң])'
+            and "translation" ~* %s
             order by sml desc limit {limit} offset {offset}
             ''',
-            (word, word, )
+            (word, word, pattern)
         )
         return [Translation(**row) for row in cur.fetchall()]
 

@@ -31,10 +31,20 @@ def translations_markup(translations: list[Translation], word):
         )
     )
     r.row(
-        types.InlineKeyboardButton(
-            'Использовать обратный поиск', callback_data=reversed_translation_factory.new(word, 0))
+        reversed_translating_button(word)
     )
     return r
+
+
+def no_results_markup(word):
+    return types.InlineKeyboardMarkup(None, 1).add(
+        reversed_translating_button(word)
+    )
+
+
+def reversed_translating_button(word):
+    return types.InlineKeyboardButton(
+        'Использовать обратный поиск', callback_data=reversed_translation_factory.new(word, 0))
 
 
 def reversed_translations_markup(translations: list[Translation], word, prev_page=None, next_page=None):

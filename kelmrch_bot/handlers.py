@@ -4,7 +4,7 @@ from telebot import types, TeleBot
 
 from kelmrch_bot.repository import repository
 from kelmrch_bot.utils import render_results
-from kelmrch_bot.markups import translate_markup, translations_markup, reversed_translations_markup
+from kelmrch_bot.markups import translate_markup, translations_markup, reversed_translations_markup, no_results_markup
 from kelmrch_bot.filters import similar_word_factory, reversed_translation_factory
 
 
@@ -50,7 +50,7 @@ def translate_handler(message: types.Message, bot: TeleBot):
                 reply_markup=translations_markup(similar_results, message.text)
             )
     else:
-        bot.send_message(message.chat.id, text)
+        bot.send_message(message.chat.id, text, reply_markup=no_results_markup(message.text))
 
 
 def similar_word_handler(callback: types.CallbackQuery, bot: TeleBot):
@@ -79,7 +79,6 @@ def reversed_translation_handler(callback: types.CallbackQuery, bot: TeleBot):
     translations = repository.get_reversed_translations(word, limit, offset)
 
     if translations:
-
         if page > 0:
             prev_page = page - 1
 
@@ -93,7 +92,6 @@ def reversed_translation_handler(callback: types.CallbackQuery, bot: TeleBot):
         )
 
     else:
-
         bot.answer_callback_query(callback.id, 'Результатов не найдено. 😔')
 
 
