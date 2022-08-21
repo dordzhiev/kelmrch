@@ -66,7 +66,7 @@ def similar_word_handler(callback: types.CallbackQuery, bot: TeleBot):
 def reversed_translation_handler(callback: types.CallbackQuery, bot: TeleBot):
     data = reversed_translation_factory.parse(callback.data)
 
-    word = data['word'].lower()
+    word = data['word']
     page = int(data['page'])
 
     word_count = 6

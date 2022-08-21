@@ -112,7 +112,7 @@ class Repository:
             from all_words aw inner join all_translations at2
             on aw.id = at2.aw_id
             where %s <%% "translation"
-            and "translation" ~ '(?<![а-яёөүәҗһң]\s)(?:{word})(?!\s[а-яёөүәҗһң])'
+            and "translation" ~* '(?<![а-яёөүәҗһң]\s)(?:{word})(?!\s[а-яёөүәҗһң])'
             order by sml desc limit {limit} offset {offset}
             ''',
             (word, word, )
