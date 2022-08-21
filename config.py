@@ -33,3 +33,6 @@ def load_config(path: str = config_path):
         tgbot=TgBot(**config['bot']),
         database=Database(**config["db"]),
     )
+
+
+config = load_config()
