@@ -24,10 +24,33 @@ def translate_markup():
 
 
 def translations_markup(translations: list[Translation], word):
-    return types.InlineKeyboardMarkup(None, 2).add(
+    r = types.InlineKeyboardMarkup(None, 2).add(
         *(
             types.InlineKeyboardButton(translation.word, callback_data=similar_word_factory.new(translation.id))
             for translation in translations
-        ),
-        types.InlineKeyboardButton('Использовать обратный поиск', callback_data=reversed_translation_factory.new(word))
+        )
     )
+    r.row(
+        types.InlineKeyboardButton(
+            'Использовать обратный поиск', callback_data=reversed_translation_factory.new(word, 0))
+    )
+    return r
+
+
+def reversed_translations_markup(translations: list[Translation], word, prev_page=None, next_page=None):
+    r = types.InlineKeyboardMarkup(None, 2)
+    if prev_page is not None:
+        r.row(
+            types.InlineKeyboardButton('‹ Назад', callback_data=reversed_translation_factory.new(word, prev_page))
+        )
+    r.add(
+        *(
+            types.InlineKeyboardButton(translation.word, callback_data=similar_word_factory.new(translation.id))
+            for translation in translations
+        )
+    )
+    if next_page is not None:
+        r.row(
+            types.InlineKeyboardButton('Дальше ›', callback_data=reversed_translation_factory.new(word, next_page))
+        )
+    return r

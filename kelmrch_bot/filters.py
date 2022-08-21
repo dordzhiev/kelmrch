@@ -1,8 +1,7 @@
 from telebot import TeleBot, types, custom_filters, callback_data
 
 similar_word_factory = callback_data.CallbackData('word_id', prefix='similar_word')
-reversed_translation_factory = callback_data.CallbackData('word', prefix='reversed_translation')
-
+reversed_translation_factory = callback_data.CallbackData('word', 'page', prefix='reversed_translation')
 
 
 class CustomCallbackFilter(custom_filters.AdvancedCustomFilter):

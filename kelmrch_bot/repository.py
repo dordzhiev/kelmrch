@@ -105,17 +105,17 @@ class Repository:
         return Translation(**cur.fetchone())
 
     @get_and_put_conn
-    def get_reversed_translations(self, word, cur):
+    def get_reversed_translations(self, word, limit, offset, cur):
         cur.execute(
-            '''
-            select word, "translation", word_similarity(%s, "translation") as sml
+            f'''
+            select aw.id, vocabulary, word, "translation", word_similarity(%s, "translation") as sml
             from all_words aw inner join all_translations at2
             on aw.id = at2.aw_id
             where %s <%% "translation"
-            and "translation" ~ '(?<![а-яёөүәҗһң]\s)(?:%s)(?!\s[а-яёөүәҗһң])'
-            order by sml desc
+            and "translation" ~ '(?<![а-яёөүәҗһң]\s)(?:{word})(?!\s[а-яёөүәҗһң])'
+            order by sml desc limit {limit} offset {offset}
             ''',
-            (word, word, word,)
+            (word, word, )
         )
         return [Translation(**row) for row in cur.fetchall()]
 

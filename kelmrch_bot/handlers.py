@@ -4,8 +4,8 @@ from telebot import types, TeleBot
 
 from kelmrch_bot.repository import repository
 from kelmrch_bot.utils import render_results
-from kelmrch_bot.markups import translate_markup, translations_markup
-from kelmrch_bot.filters import similar_word_factory
+from kelmrch_bot.markups import translate_markup, translations_markup, reversed_translations_markup
+from kelmrch_bot.filters import similar_word_factory, reversed_translation_factory
 
 
 def start_handler(message: types.Message, bot: TeleBot):
@@ -63,6 +63,40 @@ def similar_word_handler(callback: types.CallbackQuery, bot: TeleBot):
         bot.answer_callback_query(callback.id, 'Ошибка!')
 
 
+def reversed_translation_handler(callback: types.CallbackQuery, bot: TeleBot):
+    data = reversed_translation_factory.parse(callback.data)
+
+    word = data['word'].lower()
+    page = int(data['page'])
+
+    word_count = 6
+    limit = 7
+    offset = word_count * page
+
+    prev_page = None
+    next_page = None
+
+    translations = repository.get_reversed_translations(word, limit, offset)
+
+    if translations:
+
+        if page > 0:
+            prev_page = page - 1
+
+        if len(translations) == limit:
+            next_page = page + 1
+
+        bot.edit_message_reply_markup(
+            callback.message.chat.id,
+            callback.message.message_id, None,
+            reversed_translations_markup(translations[:word_count], word, prev_page, next_page)
+        )
+
+    else:
+
+        bot.answer_callback_query(callback.id, 'Результатов не найдено. 😔')
+
+
 def inline_handler(inline_query: types.InlineQuery, bot: TeleBot):
     query_offset = int(inline_query.offset) if inline_query.offset else 0
     max_offset = 15
@@ -111,8 +145,15 @@ def inline_handler(inline_query: types.InlineQuery, bot: TeleBot):
 
 
 def import_handlers(bot: TeleBot):
-    bot.register_message_handler(start_handler, None, ['start'], pass_bot=True)
-    bot.register_message_handler(help_handler, None, ['help'], pass_bot=True)
-    bot.register_message_handler(translate_handler, ['text'], pass_bot=True)
-    bot.register_callback_query_handler(similar_word_handler, None, pass_bot=True, config=similar_word_factory.filter())
-    bot.register_inline_handler(inline_handler, None, pass_bot=True)
+    bot.register_message_handler(
+        start_handler, None, ['start'], pass_bot=True)
+    bot.register_message_handler(
+        help_handler, None, ['help'], pass_bot=True)
+    bot.register_message_handler(
+        translate_handler, ['text'], pass_bot=True)
+    bot.register_callback_query_handler(
+        similar_word_handler, None, pass_bot=True, config=similar_word_factory.filter())
+    bot.register_callback_query_handler(
+        reversed_translation_handler, None, pass_bot=True, config=reversed_translation_factory.filter())
+    bot.register_inline_handler(
+        inline_handler, None, pass_bot=True)
